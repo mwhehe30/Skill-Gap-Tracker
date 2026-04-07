@@ -84,7 +84,7 @@ export default function SignUp() {
   const handleRegister = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
+
     const formData = new FormData(e.currentTarget);
     const firstName = formData.get('first_name');
     const lastName = formData.get('last_name');
@@ -110,15 +110,19 @@ export default function SignUp() {
           emailRedirectTo: window.location.origin,
         },
       });
-      
+
       setLoading(false);
-      
+
       if (error) {
         // Handle error dari Supabase
-        if (error.message.includes('already registered') || 
-            error.message.includes('User already registered') ||
-            error.status === 422) {
-          showToast('Email sudah terdaftar. Silakan gunakan email lain atau login.');
+        if (
+          error.message.includes('already registered') ||
+          error.message.includes('User already registered') ||
+          error.status === 422
+        ) {
+          showToast(
+            'Email sudah terdaftar. Silakan gunakan email lain atau login.',
+          );
         } else {
           showToast(error.message);
         }
@@ -126,15 +130,23 @@ export default function SignUp() {
       }
 
       // Cek apakah user sudah ada (Supabase return user tapi dengan identities kosong jika email sudah ada)
-      if (data.user && data.user.identities && data.user.identities.length === 0) {
-        showToast('Email sudah terdaftar. Silakan gunakan email lain atau login.');
+      if (
+        data.user &&
+        data.user.identities &&
+        data.user.identities.length === 0
+      ) {
+        showToast(
+          'Email sudah terdaftar. Silakan gunakan email lain atau login.',
+        );
         return;
       }
 
       // Sukses signup
-      showToast('Registrasi berhasil! Silakan cek email kamu untuk verifikasi.', 'success');
+      showToast(
+        'Registrasi berhasil! Silakan cek email kamu untuk verifikasi.',
+        'success',
+      );
       setTimeout(() => router.push('/signin'), 2000);
-      
     } catch (err) {
       setLoading(false);
       showToast('Terjadi kesalahan. Silakan coba lagi.');
@@ -144,21 +156,29 @@ export default function SignUp() {
 
   const handleGoogle = async () => {
     // Daftar/Login pakai akun Google
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-    });
+    // await supabase.auth.signInWithOAuth({
+    //   provider: 'google',
+    // });
+    alert('Login dengan Google belum diimplementasikan');
   };
 
   return (
     <div className='min-h-screen bg-[#dde3e8] flex items-center justify-center p-6'>
       {toast && (
-        <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl text-sm font-medium shadow-lg transition-all ${
-          toast.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
-        }`}>
+        <div
+          className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl text-sm font-medium shadow-lg transition-all ${
+            toast.type === 'error'
+              ? 'bg-red-100 text-red-700'
+              : 'bg-green-100 text-green-700'
+          }`}
+        >
           {toast.message}
         </div>
       )}
-      <Link href='/' className='absolute top-6 left-6 flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 transition-colors cursor-pointer'>
+      <Link
+        href='/'
+        className='absolute top-6 left-6 flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 transition-colors cursor-pointer'
+      >
         <ArrowLeft size={16} />
         Beranda
       </Link>

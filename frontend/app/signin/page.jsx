@@ -8,7 +8,6 @@ import Image from 'next/image';
 import { ArrowLeft } from 'lucide-react';
 
 function DecorPanel() {
-
   return (
     <div className='relative flex flex-col justify-between p-8 bg-[#e8ecef] rounded-3xl shadow-custom-card inverted-radius-kiri max-h-full text-right'>
       {/* Top text */}
@@ -103,28 +102,35 @@ export default function SignIn() {
 
   const handleGoogle = async () => {
     // Login lewat Google OAuth
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-    });
+    // await supabase.auth.signInWithOAuth({
+    //   provider: 'google',
+    // });
+    alert('Login dengan Google belum diimplementasikan');
   };
 
   return (
     <div className='min-h-screen bg-[#dde3e8] flex items-center justify-center p-6'>
       {toast && (
-        <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl text-sm font-medium shadow-lg transition-all ${
-          toast.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
-        }`}>
+        <div
+          className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl text-sm font-medium shadow-lg transition-all ${
+            toast.type === 'error'
+              ? 'bg-red-100 text-red-700'
+              : 'bg-green-100 text-green-700'
+          }`}
+        >
           {toast.message}
         </div>
       )}
-      <Link href='/' className='absolute top-6 left-6 flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 transition-colors cursor-pointer'>
+      <Link
+        href='/'
+        className='absolute top-6 left-6 flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 transition-colors cursor-pointer'
+      >
         <ArrowLeft size={16} />
         Beranda
       </Link>
       <div className='flex gap-8 w-full max-w-4xl items-stretch'>
         {/* Decor panel - left */}
         <div className='hidden md:flex flex-1'>
-          
           <DecorPanel />
         </div>
 
@@ -168,8 +174,11 @@ export default function SignIn() {
               required
               className='w-full px-4 py-3 rounded-2xl bg-[#8a9199] text-white placeholder-gray-200 outline-none focus:ring-2 focus:ring-gray-500 '
             />
-            
-            <Link href={"/lupa-kata-sandi"} className='text-xs text-gray-600 -mt-1 ml-1 cursor-pointer hover:underline'>
+
+            <Link
+              href={'/lupa-kata-sandi'}
+              className='text-xs text-gray-600 -mt-1 ml-1 cursor-pointer hover:underline'
+            >
               Lupa Kata Sandi?
             </Link>
 
