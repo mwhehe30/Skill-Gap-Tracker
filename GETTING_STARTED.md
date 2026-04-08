@@ -46,6 +46,8 @@ npm install
 
 ### Step 2: Setup Supabase Project
 
+**📖 Panduan lengkap:** [SUPABASE_SETUP.md](SUPABASE_SETUP.md)
+
 #### 2.1 Buat Project Baru
 1. Buka [supabase.com](https://supabase.com) dan login
 2. Klik **"New Project"**
@@ -63,6 +65,21 @@ npm install
    - **service_role key**: Klik "Reveal" → Copy
 
 ⚠️ **PENTING:** `service_role` key adalah SECRET, jangan share!
+
+#### 2.3 Configure URL Redirects (PENTING!)
+1. Di Supabase Dashboard → **Authentication** → **URL Configuration**
+2. Di bagian **Redirect URLs**, tambahkan:
+   ```
+   http://localhost:3000
+   http://localhost:3000/onboarding
+   http://localhost:3000/dashboard
+   http://localhost:3000/reset-kata-sandi
+   ```
+3. Klik **Save**
+
+⚠️ **PENTING**: Tanpa whitelist URL ini, email verification akan gagal redirect!
+
+**📖 Detail lengkap:** Lihat [SUPABASE_SETUP.md](SUPABASE_SETUP.md)
 
 ### Step 3: Setup Gemini API
 
