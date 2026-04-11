@@ -113,11 +113,11 @@ Jika telah berhasil tereksekusi tanpa gagal (error), Anda dapat mulai menggunaka
 
 **Tim ID: CC26-PS088**
 
-| Nama | ID Cohort |
-| :--- | :--- |
+| Nama | ID Cohort | Github |
+| :--- | :--- | :--- |
 | Pasha Raditya Putra | CFS216D6Y067 |
 | Neezar Abdurrahman Ahnaf Abiyyi | CFS054D6Y012 |
 | Zaky Mubarok | CFS202D6Y038 |
-| Dhanis Fathan Gunawan | CFS202D6Y039 |
+| Dhanis Fathan Gunawan | CFS202D6Y039 | https://github.com/Dhnth |
 | Muhammad Raihan | CFS122D6Y041 |
 
