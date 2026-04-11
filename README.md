@@ -1,6 +1,6 @@
 # Skill Gap Tracker
 
-Skill Gap Tracker adalah aplikasi analitik dan manajemen karir yang dirancang untuk membantu pengguna mengukur kesenjangan keterampilan (skill gap) mereka terhadap target peran pekerjaan tertentu. Melalui integrasi dengan kecerdasan buatan (Google Gemini AI), aplikasi ini membandingkan keahlian pengguna dengan tren industri standar berdasarkan database internal, lalu menghasilkan peta jalan pembelajaran (learning roadmap) yang dipersonalisasi. 
+Skill Gap Tracker adalah aplikasi analitik dan manajemen karir yang dirancang untuk membantu pengguna mengukur kesenjangan keterampilan (skill gap) mereka terhadap target peran pekerjaan tertentu. Melalui integrasi dengan kecerdasan buatan (Google Gemini AI), aplikasi ini membandingkan keahlian pengguna dengan tren industri standar berdasarkan database internal, lalu menghasilkan peta jalan pembelajaran (learning roadmap) yang dipersonalisasi.
 
 Fitur utama aplikasi ini meliputi:
 - Analisis kesenjangan keterampilan (Skill Gap Analysis) secara otomatis.
@@ -117,7 +117,7 @@ Jika telah berhasil tereksekusi tanpa gagal (error), Anda dapat mulai menggunaka
 | :--- | :--- | :--- |
 | Pasha Raditya Putra | CFS216D6Y067 | https://github.com/Ashaaardtp |
 | Neezar Abdurrahman Ahnaf Abiyyi | CFS054D6Y012 | https://github.com/neezar-abd |
-| Zaky Mubarok | CFS202D6Y038 | |
+| Zaky Mubarok | CFS202D6Y038 | https://github.com/mwhehe30 |
 | Dhanis Fathan Gunawan | CFS202D6Y039 | https://github.com/Dhnth |
 | Muhammad Raihan | CFS122D6Y041 | https://github.com/Dikrey |
 
