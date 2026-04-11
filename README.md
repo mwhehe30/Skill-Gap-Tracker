@@ -115,7 +115,7 @@ Jika telah berhasil tereksekusi tanpa gagal (error), Anda dapat mulai menggunaka
 
 | Nama | ID Cohort | Github |
 | :--- | :--- | :--- |
-| Pasha Raditya Putra | CFS216D6Y067 | |
+| Pasha Raditya Putra | CFS216D6Y067 | https://github.com/Ashaaardtp |
 | Neezar Abdurrahman Ahnaf Abiyyi | CFS054D6Y012 | https://github.com/neezar-abd |
 | Zaky Mubarok | CFS202D6Y038 | |
 | Dhanis Fathan Gunawan | CFS202D6Y039 | https://github.com/Dhnth |
