@@ -83,12 +83,13 @@ Jika telah berhasil tereksekusi tanpa gagal (error), Anda dapat mulai menggunaka
 ```text
 .
 ├── backend/                      # Logika server API (Express.js)
-│   ├── src/                      # Kode sumber utama aplikasi backend
-│   ├── database/                 # Skrip formasi SQL untuk basis data
-│   └── dataset_baru/             # Referensi data sistem (JSON/CSV)
+│   └── src/                      # Kode sumber utama aplikasi backend
+├── database/                     # Skrip formasi SQL untuk basis data
+├── dataset_baru/                 # Master referensi data (JSON/CSV)
 └── frontend/                     # Antarmuka web pengguna (Next.js)
     ├── app/                      # Rute halaman (App Router)
     ├── components/               # Komponen visual (React)
+    ├── context/                  # Manajemen state global (React Context)
     └── lib/                      # Fungsi utilitas dan konfigurasi pendukung
 ```
 
