@@ -7,39 +7,110 @@ dotenv.config();
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-/**
- * Generate roadmap belajar dengan RAG:
- * 1. Retrieve job requirements yang relevan via pgvector similarity search
- * 2. Inject sebagai context ke prompt Gemini
- * 3. Gemini generate roadmap berdasarkan data nyata dari market
- *
- * @param {string} targetRole - Nama role target (contoh: "Frontend Developer")
- * @param {string} targetRoleId - UUID role target (untuk vector search)
- * @param {Array} gapSkills - Array of { name, category } yang perlu dipelajari
- * @returns {Object} roadmap dari Gemini dalam format JSON
- */
-export const generateRoadmap = async (targetRole, targetRoleId, gapSkills, currentPosition = 'tidak diketahui') => {
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+// ─────────────────────────────────────────────────────────────
+// Diubah agar jika 1 model error ada model lain
+// ─────────────────────────────────────────────────────────────
+const MODEL_CANDIDATES = [
+  'gemini-2.5-flash',
+  'gemini-2.5-flash-lite',
+  'gemini-1.5-flash',
+  'gemini-1.5-pro',
+];
 
+// Retry helper
+const delay = (ms) => new Promise((res) => setTimeout(res, ms));
+
+async function tryModel(modelName, prompt, retries = 2) {
+  for (let i = 0; i <= retries; i++) {
+    try {
+      const model = genAI.getGenerativeModel({ model: modelName });
+      const result = await model.generateContent(prompt);
+
+      const text = result.response.text();
+
+      if (!text || text.trim().length === 0) {
+        throw new Error('Empty response');
+      }
+
+      return text;
+    } catch (err) {
+      // ❌ Fatal error → stop semua
+      if (err.message?.includes('API_KEY_INVALID')) {
+        throw err;
+      }
+
+      if (i === retries) throw err;
+
+      console.warn(
+        `[Retry] ${modelName} attempt ${i + 1} failed:`,
+        err.message,
+      );
+
+      await delay(1000);
+    }
+  }
+}
+
+async function generateWithFallback(prompt) {
+  let lastError = null;
+
+  for (const modelName of MODEL_CANDIDATES) {
+    try {
+      console.log(`[AI] Trying model: ${modelName}`);
+
+      const text = await tryModel(modelName, prompt);
+
+      console.log(`[AI] Success with model: ${modelName}`);
+      return text;
+    } catch (err) {
+      console.warn(`[AI] Model failed: ${modelName}`, err.message);
+      lastError = err;
+    }
+  }
+
+  throw new Error(`All models failed: ${lastError?.message}`);
+}
+
+// ─────────────────────────────────────────────────────────────
+// 🚀 MAIN FUNCTION
+// ─────────────────────────────────────────────────────────────
+export const generateRoadmap = async (
+  targetRole,
+  targetRoleId,
+  gapSkills,
+  currentPosition = 'tidak diketahui',
+) => {
   const skillList = gapSkills.map((s) => `- ${s.name}`).join('\n');
 
-  // ── Step 1: RAG — Retrieve relevant job requirements ─────────────────────
+  // ── Step 1: RAG ────────────────────────────────────────────
   let ragContext = '';
+
   try {
-    const queryText = `${targetRole} skill requirements: ${gapSkills.map((s) => s.name).join(', ')}`;
-    const similarDocs = await searchSimilarRequirements(queryText, targetRoleId, 5, 0.4);
+    const queryText = `${targetRole} skill requirements: ${gapSkills
+      .map((s) => s.name)
+      .join(', ')}`;
+
+    const similarDocs = await searchSimilarRequirements(
+      queryText,
+      targetRoleId,
+      5,
+      0.4,
+    );
 
     if (similarDocs.length > 0) {
       const contextSnippets = similarDocs
         .map(
           (doc, i) =>
-            `[Job Posting ${i + 1}] ${doc.title} (Source: ${doc.source}, Similarity: ${(doc.similarity * 100).toFixed(0)}%)\n${doc.content}`
+            `[Job Posting ${i + 1}] ${doc.title} (Source: ${
+              doc.source
+            }, Similarity: ${(doc.similarity * 100).toFixed(0)}%)\n${
+              doc.content
+            }`,
         )
         .join('\n\n---\n\n');
 
       ragContext = `
 ## Referensi Job Requirements dari Pasar Kerja Aktual
-Berikut adalah contoh job posting nyata untuk posisi ${targetRole} yang telah dikumpulkan dari berbagai platform:
 
 ${contextSnippets}
 
@@ -47,115 +118,121 @@ ${contextSnippets}
 `;
     }
   } catch (err) {
-    // Jika RAG gagal, tetap lanjut tanpa context (graceful degradation)
-    console.warn('[RAG] Vector search failed, generating without context:', err.message);
+    console.warn('[RAG] Failed:', err.message);
   }
 
-  // ── Step 1.5: Fetch valid URLs from DB ─────────────────────────────────
+  // ── Step 1.5: Load resources ───────────────────────────────
   const skillIds = gapSkills.map((s) => s.id);
   const resourceCatalog = {};
 
   try {
     if (skillIds.length > 0) {
-      // Build an id->name map from the gapSkills array
       const idToName = {};
-      gapSkills.forEach(s => { idToName[s.id] = s.name; });
+      gapSkills.forEach((s) => (idToName[s.id] = s.name));
 
       const { data: resources } = await supabase
         .from('skill_resources')
         .select('skill_id, title, type, url, platform')
         .in('skill_id', skillIds);
 
-      if (resources && resources.length > 0) {
-        resources.forEach(r => {
+      if (resources?.length) {
+        resources.forEach((r) => {
           const sName = idToName[r.skill_id];
-          if (sName) {
-            if (!resourceCatalog[sName]) resourceCatalog[sName] = [];
-            resourceCatalog[sName].push({
-              title: r.title,
-              type: r.type,
-              url: r.url,
-              platform: r.platform
-            });
-          }
+          if (!sName) return;
+
+          if (!resourceCatalog[sName]) resourceCatalog[sName] = [];
+
+          resourceCatalog[sName].push({
+            title: r.title,
+            type: r.type,
+            url: r.url,
+            platform: r.platform,
+          });
         });
       }
     }
   } catch (err) {
-    console.warn('[DB] Failed to load curated resources:', err.message);
+    console.warn('[DB] Failed:', err.message);
   }
 
-  // ── Step 2: Build prompt dengan RAG context ──────────────────────────────
+  // ── Step 2: Prompt ─────────────────────────────────────────
   const prompt = `
-Kamu adalah career advisor yang ahli di bidang teknologi dan pengembangan karir.
+Kamu adalah career advisor yang ahli di bidang teknologi.
 
 ${ragContext}
 
-User saat ini berstatus sebagai **${currentPosition}** dan ingin menjadi **${targetRole}**. Skill gap yang perlu dipelajari:
+User saat ini: ${currentPosition}
+Target: ${targetRole}
+
+Skill gap:
 ${skillList}
 
-Berdasarkan referensi job requirements di atas (jika ada) dan pengetahuanmu, buatkan roadmap belajar yang terstruktur dan realistis dalam format JSON:
+Buat roadmap JSON:
 
 {
-  "summary": "Ringkasan roadmap dalam 2-3 kalimat, sebutkan insight dari job market",
-  "estimatedDuration": "estimasi total waktu belajar",
-  "marketInsight": "1-2 kalimat tentang trend/demand skill ini di pasar kerja",
+  "summary": "...",
+  "estimatedDuration": "...",
+  "marketInsight": "...",
   "phases": [
     {
       "phase": 1,
-      "title": "Judul fase",
-      "duration": "estimasi durasi fase ini",
-      "focus_skills": ["Nama Skill Persis dari Daftar Gap"],
-      "sub_topics": ["Sub-topik 1", "Sub-topik 2 (misal: Variabel, dll)"]
+      "title": "...",
+      "duration": "...",
+      "focus_skills": ["..."],
+      "sub_topics": ["..."]
     }
   ]
 }
 
-Pastikan:
-- Urutkan dari skill fundamental ke advanced.
-- "focus_skills" HANYA BOLEH diisi dengan satu atau lebih NAMA SKILL TEPAT SEPERTI YANG ADA DI DAFTAR GAP (jangan diubah atau dipecah namanya).
-- Jangan sertakan field "resources" sama sekali. Backend kami akan mengurus datanya.
-- "sub_topics" silakan diisi dengan breakdown materi yang detail.
-- Field "marketInsight" wajib diisi berdasarkan insight job posting yang relevan.
-- Jawab HANYA dengan JSON valid, tanpa teks tambahan.
+Rules:
+- Hanya JSON
+- Skill HARUS sama persis
+- Jangan buat field resources
 `;
 
-  // ── Step 3: Generate dengan Gemini ───────────────────────────────────────
-  const result = await model.generateContent(prompt);
-  const text = result.response.text();
+  // ── Step 3: AI Generate ────────────────────────────────────
+  const rawText = await generateWithFallback(prompt);
 
-  // Clean markdown code block jika ada
-  const cleanJson = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+  const cleanJson = rawText
+    .replace(/```json\n?/g, '')
+    .replace(/```\n?/g, '')
+    .trim();
 
   try {
-    const parsedObj = JSON.parse(cleanJson);
+    const parsed = JSON.parse(cleanJson);
 
-    // Helper: fuzzy match nama skill (Gemini sering rename/group skill dari daftar)
-    const findResourcesForSkill = (geminiSkillName, catalog) => {
-      if (catalog[geminiSkillName]) return catalog[geminiSkillName];
-      const norm = geminiSkillName.toLowerCase();
-      for (const [key, res] of Object.entries(catalog)) {
-        if (norm.includes(key.toLowerCase()) || key.toLowerCase().includes(norm)) return res;
+    // ── Inject resources ─────────────────────────────────────
+    const findResources = (skillName) => {
+      if (resourceCatalog[skillName]) return resourceCatalog[skillName];
+
+      const norm = skillName.toLowerCase();
+
+      for (const [key, val] of Object.entries(resourceCatalog)) {
+        if (
+          norm.includes(key.toLowerCase()) ||
+          key.toLowerCase().includes(norm)
+        ) {
+          return val;
+        }
       }
+
       return null;
     };
 
-    // Inject programmatic resources dengan fuzzy matching
-    if (parsedObj.phases && Array.isArray(parsedObj.phases)) {
-      parsedObj.phases.forEach(phase => {
+    if (parsed.phases) {
+      parsed.phases.forEach((phase) => {
         phase.resources = [];
-        if (phase.focus_skills && Array.isArray(phase.focus_skills)) {
-          phase.focus_skills.forEach(skillName => {
-            const matched = findResourcesForSkill(skillName, resourceCatalog);
-            if (matched) phase.resources.push(...matched);
-          });
-        }
+
+        phase.focus_skills?.forEach((skill) => {
+          const res = findResources(skill);
+          if (res) phase.resources.push(...res);
+        });
       });
     }
 
-    return parsedObj;
-  } catch (e) {
-    console.error("Failed to parse Gemini output:", e);
-    return { raw: text, parseError: true };
+    return parsed;
+  } catch (err) {
+    console.error('[Parse Error]', err.message);
+    return { raw: rawText, parseError: true };
   }
 };
